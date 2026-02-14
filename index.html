@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>网易云音乐MP3解析器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 1.2rem 1rem 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 460px;
+            background-color: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+            padding: 1.8rem 1.5rem 2rem;
+            border: 1px solid #eeeeee;
+        }
+
+        .main-title {
+            font-size: 2.1rem;
+            font-weight: 700;
+            color: #c20c0c;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin-bottom: 0.2rem;
+            text-align: left;
+        }
+
+        .sub-line {
+            border-bottom: 2px solid #c20c0c;
+            width: 60px;
+            margin: 0.4rem 0 1.8rem 0;
+        }
+
+        .input-group {
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #5a5a5a;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.3px;
+        }
+
+        label span {
+            color: #c20c0c;
+            font-weight: 600;
+        }
+
+        .id-input {
+            width: 100%;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 40px;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            outline: none;
+            background-color: #ffffff;
+            transition: border 0.1s ease;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .id-input:focus {
+            border-color: #c20c0c;
+        }
+
+        .id-input::placeholder {
+            color: #bdbdbd;
+            font-weight: 300;
+            font-size: 0.95rem;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 1.8rem;
+        }
+
+        .btn-parse {
+            flex: 1;
+            background: #c20c0c;
+            border: 1.5px solid #c20c0c;
+            border-radius: 60px;
+            padding: 1rem 0.5rem;
+            font-size: 1.3rem;
+            font-weight: 650;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: none;
+            letter-spacing: 1px;
+        }
+
+        .btn-parse:active {
+            background: #a80a0a;
+            transform: scale(0.97);
+        }
+
+        .player-section {
+            margin-bottom: 2rem;
+            width: 100%;
+            background-color: #fafafa;
+            border-radius: 32px;
+            border: 1px solid #f0f0f0;
+            transition: all 0.1s ease;
+            overflow: hidden;
+            line-height: 0;
+        }
+
+        audio {
+            width: 100%;
+            border-radius: 32px;
+            background-color: #f2f2f2;
+            display: block;
+        }
+
+        .placeholder-text {
+            text-align: center;
+            color: #aaa;
+            font-size: 0.9rem;
+            padding: 1.5rem 1rem;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .error-text {
+            text-align: center;
+            color: #c20c0c;
+            font-size: 0.9rem;
+            padding: 1.5rem 1rem;
+            background-color: #ffeeee;
+            border-radius: 32px;
+            line-height: 1.4;
+        }
+
+        .disclaimer {
+            margin-top: 1.5rem;
+            padding: 1.2rem 1rem;
+            background-color: #fcfcfc;
+            border-top: 1px solid #eaeaea;
+            border-bottom: 1px solid #eaeaea;
+            font-size: 0.8rem;
+            color: #4a4a4a;
+            line-height: 1.6;
+        }
+
+        .disclaimer-title {
+            font-weight: 670;
+            color: #c20c0c;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.9rem;
+        }
+
+        .disclaimer-title::before {
+            content: "⚠️";
+            font-size: 1rem;
+            margin-right: 4px;
+        }
+
+        .disclaimer ol {
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+        }
+
+        .disclaimer li {
+            margin-bottom: 0.4rem;
+        }
+
+        .disclaimer strong {
+            color: #c20c0c;
+            font-weight: 600;
+        }
+
+        .highlight-red {
+            color: #c20c0c;
+            font-weight: 500;
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #a0a0a0;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="main-title">网易云音乐<br>MP3解析器</div>
+    <div class="sub-line"></div>
+
+    <div class="input-group">
+        <label><span>🔴</span> 歌曲ID 或 分享链接</label>
+        <input type="text" class="id-input" id="songInput" placeholder="" autocomplete="off">
+    </div>
+
+    <div class="button-row">
+        <button class="btn-parse" id="parseBtn">解析为MP3</button>
+    </div>
+
+    <div class="player-section" id="playerContainer">
+        <div class="placeholder-text">等待解析</div>
+    </div>
+    <p>tips：<p/>
+    <p>1.点击 “ ⋮ ” 其中有下载选项哦~<p/>
+    <p>2.如显示为灰色，请稍作等待，如果等待无效则代表无该资源哦~<p/>
+    <div class="disclaimer">
+        <div class="disclaimer-title">重要免责声明</div>
+        <ol>
+            <li><strong>仅供学习交流</strong> — 本项目完全开源，仅用于技术学习和研究。请勿商用或大规模非法传播。</li>
+            <li><strong>责任自负</strong> — 下载的歌曲请在 <span class="highlight-red">24小时内删除</span>，支持正版。因使用本项目导致的任何问题（法律纠纷等）本人概不负责。</li>
+        </ol>
+        <div style="margin-top: 0.8rem; border-left: 2px solid #c20c0c; padding-left: 0.8rem;">请合理使用。</div>
+    </div>
+
+    <div class="footer-note">本项目来自 Yerz_凝</div>
+    <div class="footer-note">可前往 GitHub，哔哩哔哩，YouTube 进行搜索关注哦~</div>
+</div>
+
+<script>
+    (function() {
+        const inputField = document.getElementById('songInput');
+        const parseBtn = document.getElementById('parseBtn');
+        const playerContainer = document.getElementById('playerContainer');
+
+        inputField.value = '';
+
+        function extractSongId(raw) {
+            if (!raw || typeof raw !== 'string') return null;
+            const trimmed = raw.trim();
+            if (trimmed === '') return null;
+
+            if (/^\d{1,12}$/.test(trimmed)) {
+                return trimmed;
+            }
+
+            let match = trimmed.match(/[?&]id=(\d{1,12})(?:&|$)/);
+            if (match) return match[1];
+
+            match = trimmed.match(/\/song\/(\d{1,12})(?:\?|$|\/)/);
+            if (match) return match[1];
+
+            match = trimmed.match(/\d+/);
+            if (match) return match[0];
+
+            return null;
+        }
+
+        function isValidId(id) {
+            if (!id) return false;
+            return /^\d{3,12}$/.test(id);
+        }
+
+        function resetToWaiting() {
+            playerContainer.innerHTML = '<div class="placeholder-text">等待解析</div>';
+        }
+
+        function showError(message) {
+            playerContainer.innerHTML = '<div class="error-text">❌ ' + message + '</div>';
+        }
+
+        function handleParse() {
+            const raw = inputField.value;
+
+            if (!raw || raw.trim() === '') {
+                resetToWaiting();
+                return;
+            }
+
+            const id = extractSongId(raw);
+
+            if (!id) {
+                showError('无法提取到歌曲ID');
+                return;
+            }
+
+            if (!isValidId(id)) {
+                showError('ID格式不正确 (需为3-12位数字)');
+                return;
+            }
+
+            const audioUrl = 'https://music.163.com/song/media/outer/url?id=' + id;
+
+            const audioElement = document.createElement('audio');
+            audioElement.controls = true;
+            audioElement.autoplay = false;
+            audioElement.preload = 'metadata';
+
+            const source = document.createElement('source');
+            source.src = audioUrl;
+            source.type = 'audio/mpeg';
+
+            audioElement.appendChild(source);
+            audioElement.appendChild(document.createTextNode('您的浏览器不支持 audio 标签'));
+
+            playerContainer.innerHTML = '';
+            playerContainer.appendChild(audioElement);
+        }
+
+        parseBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            handleParse();
+            this.style.opacity = '0.8';
+            setTimeout(() => this.style.opacity = '1', 70);
+        });
+
+        inputField.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                parseBtn.click();
+            }
+        });
+
+        inputField.addEventListener('blur', function() {
+            if (inputField.value.trim() === '') {
+                resetToWaiting();
+            }
+        });
+
+        inputField.addEventListener('paste', function() {
+            setTimeout(() => {
+                if (inputField.value.trim() === '') {
+                    resetToWaiting();
+                }
+            }, 30);
+        });
+
+        window.addEventListener('load', function() {
+            inputField.value = '';
+            resetToWaiting();
+        });
+    })();
+</script>
+
+</body>
+</html>
